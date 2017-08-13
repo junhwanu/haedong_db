@@ -12,7 +12,7 @@ class DBInsert(ModuleClass):
         self.db_manager = db_manager.DBManager()
         self.db_manager.connect()
 
-    def get_last_date_in_DB(self):
+    def get_last_working_day(self, subject_code):
         pass
 
     def insert_data(self, subject_code, data):

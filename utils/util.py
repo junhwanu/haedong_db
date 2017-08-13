@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 import datetime, time
 import constant as const
-import chart_manager as chart
-import strategy_var as st
-import subject
 import sys
 import os
+
+def get_next_date(today_str):
+    today_str_list = today_str.split("-")
+    today = datetime.date(int(today_str_list[0]), int(today_str_list[1]), int(today_str_list[2]))
+    return str(today + datetime.timedelta(days=1))
 
 def get_today_date():
     today = datetime.date.today()
