@@ -2,14 +2,16 @@
 from __module import ModuleClass
 from constant import *
 import db_manager
-
+from log_manager import LogManager
 
 class DBInsert(ModuleClass):
     db_manager = db_manager.DBManager()
+    log, res, err_log = None, None, None
 
     def __init__(self):
         super(DBInsert, self).__init__()
         self.db_manager.connect()
+        self.log, self.res, self.err_log = LogManager.__call__().get_logger()
 
     def get_last_working_day(self, subject_code):
         query = """
@@ -22,21 +24,35 @@ class DBInsert(ModuleClass):
         if result[0] == None:
             return '2000-01-01'
 
-        return result[0]
+        return str(result[0])
 
     def insert_data(self, subject_code, data):
-        query = """
-        insert into %s 
-                    (date, price, volume, working_day)
-                    values  
-        """ % subject_code
-        query = query + "(%s, %s, %s, %s)"
+        try:
+            query = """
+            insert into %s 
+                        (date, price, volume, working_day)
+                        values  
+            """ % subject_code
+            query = query + "(%s, %s, %s, %s)"
 
 
-        if not self.exist_table(subject_code):
-            self.create_table(subject_code)
+            if not self.exist_table(subject_code):
+                self.create_table(subject_code)
 
-        self.db_manager.exec_query_many(query, data)
+            self.log.info("%s 종목 데이터 수[%s], 처음 데이터 %s" % (subject_code, len(data), data[0]))
+            '''
+            while len(data) > 0:
+                if len(data) > 1000:
+                    self.db_manager.exec_query_many(query, data[:1000])
+                    data = data[1000:]
+                else:
+                    self.db_manager.exec_query_many(query, data)
+                    break
+            '''
+            self.db_manager.exec_query_many(query, data)
+
+        except Exception as err:
+            print(err)
 
     def exist_table(self, subject_code):
         query = "show tables like '%s'" % subject_code

@@ -255,30 +255,30 @@ class Api(ModuleClass):
                         tuple = tmp_data[0]
                         if tuple[3] < self.tmp_start_date:
                             tmp_data.pop(0)
+                            if len(tmp_data) == 0: break
                         else: break
 
-                    self.data.insert(0, tmp_data)
+                    self.data = tmp_data + self.data
                     self.db_manager.insert_data(subject_code, self.data)
                     self.log.info("%s 종목 DB 저장 완료." % subject_code)
                     self.get_next_subject_data()
-                elif len(self.data) > 600 and recv_working_day > self.data[-1][3]:
+                elif len(self.data) >= 600 and str(tmp_data[-1][3]) > str(self.data[0][3]):
                     # 싸이클 돔
                     if self.db_manager.is_empty_table(subject_code) or self.last_working_day < recv_working_day:
                         while True:
                             tuple = tmp_data[0]
-                            if tuple[3] < self.tmp_start_date:
+                            if tuple[3] > self.tmp_start_date:
                                 tmp_data.pop(0)
+                                if len(tmp_data) == 0: break
                             else:
                                 break
 
-                        self.data.insert(0, tmp_data)
+                        self.data = tmp_data + self.data
                         self.db_manager.insert_data(subject_code, self.data)
                         self.log.info("%s 종목 DB 저장 완료." % subject_code)
                         self.get_next_subject_data()
-                    else:
-                        self.log.info("%s 종목 원하는 시작일부터 데이터를 받아올 수 없으므로 Pass." % subject_code)
                 else:
-                    self.data.insert(0, tmp_data)
+                    self.data = tmp_data + self.data
                     self.log.info("%s 종목 연속조회 요청." % subject_code)
                     self.request_tick_info(subject_code, "1", sPreNext)
 
@@ -325,7 +325,9 @@ class Api(ModuleClass):
                     self.log.info("입력일이 마지막 저장된 영업일 이후입니다. (%s)" % subject_code)
                     self.get_next_subject_data()
                 else:
+                    self.log.info("%s 종목 start_date : %s" % (subject_code, start_date))
                     if start_date == "": self.tmp_start_date = get_next_date(self.last_working_day)
+                    self.log.info("%s 종목 tmp_start_date : %s" % (subject_code, self.tmp_start_date))
                     self.request_tick_info(subject_code, "1", "")
         except Exception as err:
             self.log.error(get_error_msg(err))
