@@ -212,7 +212,7 @@ class Api(ModuleClass):
         :param sSplmMsg: 1.0.0.1 버전 이후 사용하지 않음.
         """
         self.log.debug("current thread : %s" % threading.current_thread().__class__.__name__)
-        self.log.info("onReceiveTrData, sScrNo : %s, sRQName : %s, sTrCode : %s, sRecordName : %s, sPreNext : %s" % (sScrNo, sRQName, sTrCode, sRecordName, sPreNext))
+        self.log.debug("onReceiveTrData, sScrNo : %s, sRQName : %s, sTrCode : %s, sRecordName : %s, sPreNext : %s" % (sScrNo, sRQName, sTrCode, sRecordName, sPreNext))
 
         try:
             if sRQName == '상품별현재가조회':
@@ -239,7 +239,49 @@ class Api(ModuleClass):
 
                 data_str = self.ocx.dynamicCall("GetCommFullData(QString, QString, int)", sTrCode,
                                                 sRecordName, 0)
-                tmp_data = data_str.split()[1:]
+
+                tmp_data = parse_data(data_str.split())
+                recv_working_day = tmp_data[0][3]
+
+                if len(self.data) == 0 and len(tmp_data) < 600:
+                    self.log.info("%s 종목 해당 종목 데이터 미량으로 Pass." % subject_code)
+                    self.get_next_subject_data()
+                    return
+
+
+                self.log.info(tmp_data[0])
+                if recv_working_day < self.tmp_start_date:
+                    while True:
+                        tuple = tmp_data[0]
+                        if tuple[3] < self.tmp_start_date:
+                            tmp_data.pop(0)
+                        else: break
+
+                    self.data.insert(0, tmp_data)
+                    self.db_manager.insert_data(subject_code, self.data)
+                    self.log.info("%s 종목 DB 저장 완료." % subject_code)
+                    self.get_next_subject_data()
+                elif len(self.data) > 600 and recv_working_day > self.data[-1][3]:
+                    # 싸이클 돔
+                    if self.db_manager.is_empty_table(subject_code) or self.last_working_day < recv_working_day:
+                        while True:
+                            tuple = tmp_data[0]
+                            if tuple[3] < self.tmp_start_date:
+                                tmp_data.pop(0)
+                            else:
+                                break
+
+                        self.data.insert(0, tmp_data)
+                        self.db_manager.insert_data(subject_code, self.data)
+                        self.log.info("%s 종목 DB 저장 완료." % subject_code)
+                        self.get_next_subject_data()
+                    else:
+                        self.log.info("%s 종목 원하는 시작일부터 데이터를 받아올 수 없으므로 Pass." % subject_code)
+                else:
+                    self.data.insert(0, tmp_data)
+                    self.log.info("%s 종목 연속조회 요청." % subject_code)
+                    self.request_tick_info(subject_code, "1", sPreNext)
+
 
                 '''
                 recv_working_day = tmp_data.get_working_day()
@@ -260,9 +302,6 @@ class Api(ModuleClass):
                     self.data.append(tmp_data[1:])
                     request_tick_info(subject_code, 1, prevNext)
                             '''
-                if self.start_date == "": self.start_date = self.last_working_day + 1
-
-                print(data)
 
         except Exception as err:
             self.log.error(get_error_msg(err))
@@ -274,14 +313,19 @@ class Api(ModuleClass):
         print(self.__getattribute__())
 
     def get_next_subject_data(self):
-        if len(self.subject_codes) > 0:
-            subject_code = self.subject_codes.pop(0)
-            self.data = []
-            self.last_working_day = self.db_manager.get_last_working_day(subject_code)
+        try:
+            start_date = self.start_date
+            if len(self.subject_codes) > 0:
+                subject_code = self.subject_codes.pop(0)
+                self.data = []
+                self.last_working_day = self.db_manager.get_last_working_day(subject_code)
+                self.log.info("%s 종목 last_working_day : %s" % (subject_code, self.last_working_day))
 
-            if self.start_date > self.last_working_day:
-                self.log.info("입력일이 마지막 저장된 영업일 이후입니다. (%s)" % subject_code)
-                self.get_next_subject_data()
-            else:
-                if self.start_date == "": self.start_date = get_next_date(self.last_working_day)
-                self.request_tick_info(subject_code, "1", "")
+                if start_date > self.last_working_day:
+                    self.log.info("입력일이 마지막 저장된 영업일 이후입니다. (%s)" % subject_code)
+                    self.get_next_subject_data()
+                else:
+                    if start_date == "": self.tmp_start_date = get_next_date(self.last_working_day)
+                    self.request_tick_info(subject_code, "1", "")
+        except Exception as err:
+            self.log.error(get_error_msg(err))

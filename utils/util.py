@@ -4,6 +4,20 @@ import constant as const
 import sys
 import os
 
+def parse_date(date_str):
+    return date_str[:4] + "-" + date_str[4:6] + "-" + date_str[6:8]
+
+def parse_timestamp(timestamp_str):
+    return timestamp_str[:4] + "-" + timestamp_str[4:6] + "-" + timestamp_str[6:8] + " " + timestamp_str[8:10] + ":" + timestamp_str[10:12] + ":" + timestamp_str[12:14]
+
+def parse_data(data):
+    list = []
+    for i in range(int(len(data)/7) - 1, -1, -1):
+        tuple = (parse_timestamp(data[i*7+2]), data[i*7], data[i*7+1], parse_date(data[i*7+6]))
+        list.append(tuple)
+
+    return list
+
 def get_next_date(today_str):
     today_str_list = today_str.split("-")
     today = datetime.date(int(today_str_list[0]), int(today_str_list[1]), int(today_str_list[2]))

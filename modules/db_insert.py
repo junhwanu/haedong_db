@@ -5,22 +5,41 @@ import db_manager
 
 
 class DBInsert(ModuleClass):
-    db_manager = None
+    db_manager = db_manager.DBManager()
 
     def __init__(self):
         super(DBInsert, self).__init__()
-        self.db_manager = db_manager.DBManager()
         self.db_manager.connect()
 
     def get_last_working_day(self, subject_code):
-        pass
+        query = """
+        select max(working_day) as last_working_day from %s
+        """ % subject_code
+
+        if not self.exist_table(subject_code): return '2000-01-01'
+
+        result = self.db_manager.exec_query(query, fetch_type=FETCH_ONE)
+        if result[0] == None:
+            return '2000-01-01'
+
+        return result[0]
 
     def insert_data(self, subject_code, data):
+        query = """
+        insert into %s 
+                    (date, price, volume, working_day)
+                    values  
+        """ % subject_code
+        query = query + "(%s, %s, %s, %s)"
 
-        pass
+
+        if not self.exist_table(subject_code):
+            self.create_table(subject_code)
+
+        self.db_manager.exec_query_many(query, data)
 
     def exist_table(self, subject_code):
-        query = "show tables in haedong like '%s'" % subject_code
+        query = "show tables like '%s'" % subject_code
         row = self.db_manager.exec_query(query, FETCH_ONE)
 
         if row is None:
@@ -56,6 +75,17 @@ class DBInsert(ModuleClass):
          and substr(Tables_in_haedong, (select char_length(Tables_in_haedong))\
           - 7, 8) between '%s' and '%s'" % (len(subject_symbol), subject_symbol, start_date, end_date)
         return self.db_manager.exec_query(query, fetch_type=FETCH_ALL)
+
+    def is_empty_table(self, table_name):
+        query = """
+        select count(*) from %s
+        """ % table_name
+
+        if not self.exist_table(table_name): return True
+
+        result = self.db_manager.exec_query(query, fetch_type=FETCH_ONE)
+        if result[0] > 0: return False
+        return True
 
     def get_name(self):
         return str(self.__class__.__name__)
