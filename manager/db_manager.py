@@ -18,11 +18,11 @@ class DBManager(ManagerClass):
         self.is_connected = True
 
     def disconnect(self):
+        self.curs.close()
         self.conn.close()
 
     def exec_query(self, query, fetch_type=None, fetch_count=None, cursor_type=CURSOR_TUPLE):
-        if not self.is_connected:
-            self.connect()
+        self.connect()
 
         if cursor_type == CURSOR_DICT:
             self.curs = self.conn.cursor(pymysql.cursors.DictCursor)
@@ -33,17 +33,20 @@ class DBManager(ManagerClass):
         self.conn.commit()
 
         if fetch_type == FETCH_ONE:
-            return self.curs.fetchone()
+            return_value = self.curs.fetchone()
         elif fetch_type == FETCH_ALL:
-            return self.curs.fetchall()
+            return_value = self.curs.fetchall()
         elif fetch_type == FETCH_MANY:
-            return self.curs.fetchmany(fetch_count)
+            return_value = self.curs.fetchmany(fetch_count)
         else:
             return result
 
+        self.disconnect()
+
+        return return_value
+
     def exec_query_many(self, query, data, fetch_type=None, fetch_count=None, cursor_type=CURSOR_TUPLE):
-        if not self.is_connected:
-            self.connect()
+        self.connect()
 
         if cursor_type == CURSOR_DICT:
             self.curs = self.conn.cursor(pymysql.cursors.DictCursor)
@@ -54,13 +57,18 @@ class DBManager(ManagerClass):
         self.conn.commit()
 
         if fetch_type == FETCH_ONE:
-            return self.curs.fetchone()
+            return_value = self.curs.fetchone()
         elif fetch_type == FETCH_ALL:
-            return self.curs.fetchall()
+            return_value = self.curs.fetchall()
         elif fetch_type == FETCH_MANY:
-            return self.curs.fetchmany(fetch_count)
+            return_value = self.curs.fetchmany(fetch_count)
         else:
             return result
+
+        self.disconnect()
+
+        return return_value
+
 
     def get_name(self):
         return str(self.__class__.__name__)
