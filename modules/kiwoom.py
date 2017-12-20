@@ -226,6 +226,7 @@ class Api(ModuleClass):
                     self.log.debug("상품별현재가조회, 종목코드 : %s" % subject_code)
                     self.subject_codes.append(subject_code)
 
+
                 if const.TOTAL_PRODUCT_CNT == const.RECEVIED_PRODUCT_CNT:
                     self.get_next_subject_data()
 
@@ -241,6 +242,10 @@ class Api(ModuleClass):
                                                 sRecordName, 0)
 
                 tmp_data = parse_data(data_str.split())
+                if (len(tmp_data) < 10):
+                    self.log.info("%s 종목 해당 종목 데이터 미량으로 Pass." % subject_code)
+                    self.get_next_subject_data()
+                    return
                 recv_working_day = tmp_data[0][3]
 
                 if len(self.data) == 0 and len(tmp_data) < 600:
@@ -279,7 +284,7 @@ class Api(ModuleClass):
                         self.get_next_subject_data()
                 else:
                     self.data = tmp_data + self.data
-                    self.log.info("%s 종목 연속조회 요청." % subject_code)
+                    #self.log.info("%s 종목 연속조회 요청." % subject_code)
                     self.request_tick_info(subject_code, "1", sPreNext)
 
 
