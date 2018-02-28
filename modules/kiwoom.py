@@ -320,6 +320,7 @@ class Api(ModuleClass):
     def get_next_subject_data(self):
         try:
             start_date = self.start_date
+            temp_subCode = self.subject_codes
             if len(self.subject_codes) > 0:
                 subject_code = self.subject_codes.pop(0)
                 self.data = []
@@ -334,5 +335,11 @@ class Api(ModuleClass):
                     if start_date == "": self.tmp_start_date = get_next_date(self.last_working_day)
                     self.log.info("%s 종목 tmp_start_date : %s" % (subject_code, self.tmp_start_date))
                     self.request_tick_info(subject_code, "1", "")
+            else:
+                self.log.info("다넣고 체킹시작!")
+                for temp_code in temp_subCode:
+                    self.db_manager.last_working_day_check(temp_code)
+                    self.log.info("%s 데이터 결과값(%s) :" %(temp_code, self.last_working_day_check(temp_code))
+
         except Exception as err:
             self.log.error(get_error_msg(err))
