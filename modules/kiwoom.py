@@ -21,6 +21,8 @@ class Api(ModuleClass):
     start_date = ""
     subject_codes = []
     db_manager = None
+    flag = False
+    temp_subCode = None
 
     def __init__(self, start_date = ""):
         super(Api, self).__init__()
@@ -247,20 +249,19 @@ class Api(ModuleClass):
                     self.get_next_subject_data()
                     return
                 recv_working_day = tmp_data[0][3]
-
+                # print(tmp_data)
                 if len(self.data) == 0 and len(tmp_data) < 600:
                     self.log.info("%s 종목 해당 종목 데이터 미량으로 Pass." % subject_code)
                     self.get_next_subject_data()
                     return
 
-
-                self.log.info(tmp_data[0])
+                # self.log.info(tmp_data[0])
                 if recv_working_day < self.tmp_start_date:
                     while True:
                         tuple = tmp_data[0]
-                        if tuple[3] < self.tmp_start_date:
+                        if tuple[3] < self.tmp_start_date and tuple[3] != datetime.date.today():
                             tmp_data.pop(0)
-                            if len(tmp_data) == 0: break
+                            if len(tmp_data) == 0 : break
                         else: break
 
                     self.data = tmp_data + self.data
@@ -320,12 +321,16 @@ class Api(ModuleClass):
     def get_next_subject_data(self):
         try:
             start_date = self.start_date
-            temp_subCode = self.subject_codes
+            if (self.flag==False):
+                self.temp_subCode = self.subject_codes
+
             if len(self.subject_codes) > 0:
+                self.flag = True
                 subject_code = self.subject_codes.pop(0)
                 self.data = []
                 self.last_working_day = self.db_manager.get_last_working_day(subject_code)
                 self.log.info("%s 종목 last_working_day : %s" % (subject_code, self.last_working_day))
+
 
                 if start_date > self.last_working_day:
                     self.log.info("입력일이 마지막 저장된 영업일 이후입니다. (%s)" % subject_code)
@@ -337,9 +342,10 @@ class Api(ModuleClass):
                     self.request_tick_info(subject_code, "1", "")
             else:
                 self.log.info("다넣고 체킹시작!")
-                for temp_code in temp_subCode:
+                print(self.temp_subCode)
+                for temp_code in self.temp_subCode:
                     self.db_manager.last_working_day_check(temp_code)
-                    self.log.info("%s 데이터 결과값(%s) :" %(temp_code, self.last_working_day_check(temp_code))
+                    self.log.info("%s 데이터 결과값(%s) :" %(temp_code, self.last_working_day_check(temp_code)))
 
         except Exception as err:
             self.log.error(get_error_msg(err))
