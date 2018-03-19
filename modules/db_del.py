@@ -10,17 +10,17 @@ conn = pymysql.connect(host='211.253.10.91',user='root',password='goehddl',db='h
 with conn.cursor() as cour :
     result = cour.execute('show tables like "%18%"')
     result2 = cour.fetchall()
-#print(result)
-#print(result2)
+# print(result)
+# print(result2)
 for i in result2 :
-    query = "select * from %s where working_day =\'2018-01-10\'" % i[0]
+    query = "select * from %s where working_day =\'2018-03-19\'" % i[0]
     with conn.cursor() as cour:
         count = cour.execute(query)
     if count>0:
-        query1 = "delete from %s where working_day = '2018-01-10'" % i[0]
+        query1 = "delete from %s where working_day = '2018-03-19'" % i[0]
         with conn.cursor() as cour:
             cour.execute(query1)
-            print(query)
+            print(query1)
             conn.commit()
     else :
         pass
