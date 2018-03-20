@@ -6,7 +6,7 @@ import time
 from PyQt5.QAxContainer import *
 from PyQt5.QtWidgets import *
 
-import auto_login
+#import auto_login
 import constant as const
 import screen
 from util import *
@@ -55,8 +55,8 @@ class Api(ModuleClass):
                 self.log.info("연결 성공")
 
                 # auto login
-                lg = auto_login.Login()
-                lg.run()
+                #lg = auto_login.Login()
+                #lg.run()
             else:
                 self.log.info("연결 실패")
 
@@ -252,12 +252,27 @@ class Api(ModuleClass):
                     self.get_next_subject_data()
                     return
 
-                    # self.log.info(tmp_data)
-                    if recv_working_day < self.tmp_start_date:
+
+                if recv_working_day < self.tmp_start_date:
+                    while True:
+                        tuple = tmp_data[0]
+                        if tuple[3] < self.tmp_start_date or datetime.datetime.strptime(tuple[3],
+                                                                                        "%Y-%m-%d").date() == datetime.date.today():
+                            tmp_data.pop(0)
+                            if len(tmp_data) == 0: break
+                        else:
+                            break
+
+                    self.data = tmp_data + self.data
+                    self.db_manager.insert_data(subject_code, self.data)
+                    self.log.info("%s 종목 DB 저장 완료." % subject_code)
+                    self.get_next_subject_data()
+                elif len(self.data) >= 600 and str(tmp_data[-1][3]) > str(self.data[0][3]):
+                    # 싸이클 돔
+                    if self.db_manager.is_empty_table(subject_code) or self.last_working_day < recv_working_day:
                         while True:
                             tuple = tmp_data[0]
-                            if tuple[3] < self.tmp_start_date or datetime.datetime.strptime(tuple[3],
-                                                                                            "%Y-%m-%d").date() == datetime.date.today():
+                            if tuple[3] > self.tmp_start_date:
                                 tmp_data.pop(0)
                                 if len(tmp_data) == 0: break
                             else:
@@ -267,32 +282,17 @@ class Api(ModuleClass):
                         self.db_manager.insert_data(subject_code, self.data)
                         self.log.info("%s 종목 DB 저장 완료." % subject_code)
                         self.get_next_subject_data()
-                    elif len(self.data) >= 600 and str(tmp_data[-1][3]) > str(self.data[0][3]):
-                        # 싸이클 돔
-                        if self.db_manager.is_empty_table(subject_code) or self.last_working_day < recv_working_day:
-                            while True:
-                                tuple = tmp_data[0]
-                                if tuple[3] > self.tmp_start_date:
-                                    tmp_data.pop(0)
-                                    if len(tmp_data) == 0: break
-                                else:
-                                    break
-
-                            self.data = tmp_data + self.data
-                            self.db_manager.insert_data(subject_code, self.data)
-                            self.log.info("%s 종목 DB 저장 완료." % subject_code)
-                            self.get_next_subject_data()
-                    else:
-                        while True:
-                            tuple = tmp_data[0]
-                            if datetime.datetime.strptime(tuple[3], "%Y-%m-%d").date() == datetime.date.today():
-                                tmp_data.pop(0)
-                                if len(tmp_data) == 0: break
-                            else:
-                                break
-                        self.data = tmp_data + self.data
-                        self.log.info("%s 종목 연속조회 요청." % subject_code)
-                        self.request_tick_info(subject_code, "1", sPreNext)
+                else:
+                    while True:
+                        tuple = tmp_data[0]
+                        if datetime.datetime.strptime(tuple[3], "%Y-%m-%d").date() == datetime.date.today():
+                            tmp_data.pop(0)
+                            if len(tmp_data) == 0: break
+                        else:
+                            break
+                    self.data = tmp_data + self.data
+                    self.log.info("%s 종목 연속조회 요청." % subject_code)
+                    self.request_tick_info(subject_code, "1", sPreNext)
 
 
                 '''
