@@ -241,6 +241,7 @@ class Api(ModuleClass):
                                                 sRecordName, 0)
 
                 tmp_data = parse_data(data_str.split())
+                #self.log.info(tmp_data)
                 if(len(tmp_data)<10):
                     self.log.info("%s 종목 해당 종목 데이터 미량으로 Pass." % subject_code)
                     self.get_next_subject_data()
@@ -329,6 +330,9 @@ class Api(ModuleClass):
             start_date = self.start_date
             if len(self.subject_codes) > 0:
                 subject_code = self.subject_codes.pop(0)
+                print(subject_code)
+                if subject_code =='FDAXM18':
+                    subject_code = self.subject_codes.pop(0)
                 self.data = []
                 self.last_working_day = self.db_manager.get_last_working_day(subject_code)
                 self.log.info("%s 종목 last_working_day : %s" % (subject_code, self.last_working_day))
