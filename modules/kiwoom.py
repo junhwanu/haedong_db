@@ -6,7 +6,7 @@ import time
 from PyQt5.QAxContainer import *
 from PyQt5.QtWidgets import *
 
-#import auto_login
+import auto_login
 import constant as const
 import screen
 from util import *
@@ -55,8 +55,8 @@ class Api(ModuleClass):
                 self.log.info("연결 성공")
 
                 # auto login
-                #lg = auto_login.Login()
-                #lg.run()
+                lg = auto_login.Login()
+                lg.run()
             else:
                 self.log.info("연결 실패")
 
@@ -330,9 +330,9 @@ class Api(ModuleClass):
             start_date = self.start_date
             if len(self.subject_codes) > 0:
                 subject_code = self.subject_codes.pop(0)
-                print(subject_code)
-                if subject_code =='FDAXM18':
-                    subject_code = self.subject_codes.pop(0)
+                # print(subject_code)
+                # if subject_code =='FDAXM18':
+                #     subject_code = self.subject_codes.pop(0)
                 self.data = []
                 self.last_working_day = self.db_manager.get_last_working_day(subject_code)
                 self.log.info("%s 종목 last_working_day : %s" % (subject_code, self.last_working_day))
