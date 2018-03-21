@@ -7,7 +7,7 @@ from PyQt5.QAxContainer import *
 from PyQt5.QtWidgets import *
 
 import auto_login
-import constant as const
+import notification
 import screen
 from util import *
 from __module import ModuleClass
@@ -182,7 +182,7 @@ class Api(ModuleClass):
             # 다이나믹 종목 정보 요청
             self.get_dynamic_subject_code()
 
-            #self.send_request()
+            notification.sendMessage('DB에 넣겠습니다.', self.account)
 
         elif nErrCode == -101:
             # wait_time = (06:45).to_sec() - time.time()
@@ -253,7 +253,8 @@ class Api(ModuleClass):
                     self.get_next_subject_data()
                     return
 
-                #self.log.info(tmp_data[0])
+                #self.log.info(tmp_data[0])]
+
                 if recv_working_day < self.tmp_start_date:
                     while True:
                         tuple = tmp_data[0]
@@ -283,7 +284,7 @@ class Api(ModuleClass):
                         self.db_manager.insert_data(subject_code, self.data)
                         self.log.info("%s 종목 DB 저장 완료." % subject_code)
                         self.get_next_subject_data()
-                # DB를 넣는데 당일 개장후 넣을때 들어가는 부분
+                # DB를 넣는데 당일 개장후 넣을때 받아온 캔들에서 첫번째 리스트의 working_day와 마지막 리스트의 working_day가 다를경우
                 elif len(self.data) >= 600 and str(tmp_data[-1][3]) > str(self.data[0][3]):
                     if self.last_working_day < recv_working_day:
                         while True:
@@ -297,7 +298,8 @@ class Api(ModuleClass):
                         tmp_data.reverse()
                         self.data = tmp_data + self.data
                         self.db_manager.insert_data(subject_code, self.data)
-                        self.log.info("%s 종목 DB 저장 완료." % subject_code)
+                        self.log.info("처음받아온 캔들과 마지막 캔들의 working_day 다르니 확인바람, 일단 %s 종목 DB 저장 완료." % subject_code)
+                        notification.sendMessage('처음받아온 캔들과 마지막 캔들의 working_day 다르니 확인바람, 일단 %s 종목 DB에 다넣었습니다.' % subject_code, self.account)
                         self.get_next_subject_data()
                 else:
                     while True:
@@ -361,5 +363,7 @@ class Api(ModuleClass):
                     if start_date == "": self.tmp_start_date = get_next_date(self.last_working_day)
                     self.log.info("%s 종목 tmp_start_date : %s" % (subject_code, self.tmp_start_date))
                     self.request_tick_info(subject_code, "1", "")
+            elif len(self.subject_codes) <=0 :
+                notification.sendMessage('DB검증을 시작합니다.',self.account)
         except Exception as err:
             self.log.error(get_error_msg(err))
