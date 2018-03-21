@@ -4,6 +4,7 @@ from constant import *
 import db_manager
 from log_manager import LogManager
 
+#DB 넣는건 프로그램이 시작된 날(D-day) 이전 영업일(D-1)을 넣는것이다. 일반적으로 월요일을 제외한 날에 DB에 저장된 working_day값은 D-2의 값이된다.
 class DBInsert(ModuleClass):
     db_manager = db_manager.DBManager()
     log, res, err_log = None, None, None
