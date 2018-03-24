@@ -20,6 +20,7 @@ class Api(ModuleClass):
     account = ""
     start_date = ""
     subject_codes = []
+    db_chk_subject_codes =[]
     db_manager = None
 
     def __init__(self, start_date = ""):
@@ -117,7 +118,6 @@ class Api(ModuleClass):
 
                 # debug code
                 if len(self.req) > 0:
-                    time.sleep(0.25)
                     self.send_request()
             else:
                 self.err_log.error('send request() : %s' % parse_error_code(rtn))
@@ -227,6 +227,8 @@ class Api(ModuleClass):
                     self.subject_codes.append(subject_code)
 
                 if const.TOTAL_PRODUCT_CNT == const.RECEVIED_PRODUCT_CNT:
+                    self.db_chk_subject_codes = self.subject_codes
+                    print('dbchecksubeckcode : %s' %self.db_chk_subject_codes)
                     self.get_next_subject_data()
 
             elif '해외선물옵션틱차트조회' in sRQName:
@@ -253,9 +255,37 @@ class Api(ModuleClass):
                     self.get_next_subject_data()
                     return
 
-                #self.log.info(tmp_data[0])]
+                #양이적어서 싸이클도는거 pss
+                if len(self.data) >= 600 and ((datetime.datetime.strptime(tmp_data[-1][3],"%Y-%m-%d").date()-datetime.datetime.strptime(tmp_data[0][3],"%Y-%m-%d").date()).days>1):
+                    self.log.info("%s 종목 해당 종목 데이터 미량에 싸이클돌아 pass." % subject_code)
+                    self.get_next_subject_data()
+                    return
 
-                if recv_working_day < self.tmp_start_date:
+                # self.log.info('tmp_data[0] %s, tmp_data[-1] %s' %(tmp_data[0] ,tmp_data[-1]))
+                #self.tmp_start_date는 DB에 저장되어있는 working_day 의 +1 데이값 즉, 넣어야하는 day의 값을 의미함.(주말이어도 상관 없음)
+                # 늦게 켜서 당일 장이 개시해버린경우(새벽에 넣지말것!)
+                if len(self.data) >= 600 and datetime.datetime.strptime(tmp_data[0][3],
+                                                                          "%Y-%m-%d").date() == datetime.date.today():
+                    self.request_tick_info(subject_code, "1", sPreNext)
+                    self.log.info("원래 덯어야될 때 못넣어서 넣는것! %s 종목 DB 저장 완료." % subject_code)
+                # DB에 넣을날(D-1)이 받아온 데이터의 처음이고, 마지막 데이터가 켠 당일(D-day)여서 D-day 값은 안넣어야 할 경우
+                elif len(self.data) >= 600 and datetime.datetime.strptime(tmp_data[0][3],
+                                                                          "%Y-%m-%d").date() < datetime.date.today() and datetime.datetime.strptime(
+                        tmp_data[-1][3], "%Y-%m-%d").date() == datetime.date.today():
+                    while True:
+                        tmp_data.reverse()
+                        tuple = tmp_data[0]
+                        if tuple[3] == datetime.date.today():
+                            tmp_data.pop(0)
+                            if len(tmp_data) == 0: break
+                        else:
+                            break
+                    tmp_data.reverse()
+                    self.data = tmp_data + self.data
+                    self.db_manager.insert_data(subject_code, self.data)
+                    self.log.info("%s 종목 DB 저장 완료." % subject_code)
+                    self.get_next_subject_data()
+                elif recv_working_day < self.tmp_start_date:
                     while True:
                         tuple = tmp_data[0]
                         if tuple[3] < self.tmp_start_date or datetime.datetime.strptime(tuple[3],
@@ -269,8 +299,8 @@ class Api(ModuleClass):
                     self.db_manager.insert_data(subject_code, self.data)
                     self.log.info("%s 종목 DB 저장 완료." % subject_code)
                     self.get_next_subject_data()
+                # 2주 넘어서 싸이클 돔
                 elif len(self.data) >= 600 and str(tmp_data[-1][3]) < str(self.data[0][3]):
-                    # 싸이클 돔
                     if self.db_manager.is_empty_table(subject_code) or self.last_working_day < recv_working_day:
                         while True:
                             tuple = tmp_data[0]
@@ -284,23 +314,6 @@ class Api(ModuleClass):
                         self.db_manager.insert_data(subject_code, self.data)
                         self.log.info("%s 종목 DB 저장 완료." % subject_code)
                         self.get_next_subject_data()
-                # DB를 넣는데 당일 개장후 넣을때 받아온 캔들에서 첫번째 리스트의 working_day와 마지막 리스트의 working_day가 다를경우
-                elif len(self.data) >= 600 and str(tmp_data[-1][3]) > str(self.data[0][3]):
-                    if self.last_working_day < recv_working_day:
-                        while True:
-                            tmp_data.reverse()
-                            tuple = tmp_data[0]
-                            if tuple[3] > self.tmp_start_date:
-                                tmp_data.pop(0)
-                                if len(tmp_data) == 0: break
-                            else:
-                                break
-                        tmp_data.reverse()
-                        self.data = tmp_data + self.data
-                        self.db_manager.insert_data(subject_code, self.data)
-                        self.log.info("처음받아온 캔들과 마지막 캔들의 working_day 다르니 확인바람, 일단 %s 종목 DB 저장 완료." % subject_code)
-                        notification.sendMessage('처음받아온 캔들과 마지막 캔들의 working_day 다르니 확인바람, 일단 %s 종목 DB에 다넣었습니다.' % subject_code, self.account)
-                        self.get_next_subject_data()
                 else:
                     while True:
                         tuple = tmp_data[0]
@@ -310,7 +323,7 @@ class Api(ModuleClass):
                         else:
                             break
                     self.data = tmp_data + self.data
-                    self.log.info("%s 종목 연속조회 요청." % subject_code)
+                    # self.log.info("%s 종목 연속조회 요청." % subject_code)
                     self.request_tick_info(subject_code, "1", sPreNext)
 
 
@@ -365,5 +378,15 @@ class Api(ModuleClass):
                     self.request_tick_info(subject_code, "1", "")
             elif len(self.subject_codes) <=0 :
                 notification.sendMessage('DB검증을 시작합니다.',self.account)
+                print(self.db_chk_subject_codes)
+                self.check_DB()
+        except Exception as err:
+            self.log.error(get_error_msg(err))
+
+    def check_DB(self):
+        try:
+            print(self.db_chk_subject_codes)
+            # print(self.db_manager.check_nomal_data(subject_code))
+
         except Exception as err:
             self.log.error(get_error_msg(err))

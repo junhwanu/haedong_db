@@ -110,6 +110,6 @@ class DBInsert(ModuleClass):
     def print_status(self):
         print(self.__getattribute__())
 
-    def last_working_day_check(self, table_name):
+    def check_nomal_data(self,table_name):
         query = 'select * from  %s order by id desc limit 1' % table_name
-        return self.db_manager.exec_query(query, fetch_type=FETCH_ALL)
+        return self.db_manager.exec_query(query, fetch_type=FETCH_ONE)
