@@ -255,8 +255,9 @@ class Api(ModuleClass):
                     self.get_next_subject_data()
                     return
 
-                #양이적어서 싸이클도는거 pss
-                if len(self.data) >= 600 and ((datetime.datetime.strptime(tmp_data[-1][3],"%Y-%m-%d").date()-datetime.datetime.strptime(tmp_data[0][3],"%Y-%m-%d").date()).days>1):
+                # 디비 마지막 저장한 날짜가 금요일이 아니고 양이적어서 싸이클도는거 pss
+                # print("self.working_day 금요일이면 5 %s" %datetime.datetime.strptime(self.last_working_day,"%Y-%m-%d").date().isoweekday())
+                if (datetime.datetime.strptime(self.last_working_day,"%Y-%m-%d").date().isoweekday()!=5) and len(self.data) >= 600 and ((datetime.datetime.strptime(tmp_data[-1][3],"%Y-%m-%d").date()-datetime.datetime.strptime(tmp_data[0][3],"%Y-%m-%d").date()).days>2):
                     self.log.info("%s 종목 해당 종목 데이터 미량에 싸이클돌아 pass." % subject_code)
                     self.get_next_subject_data()
                     return
@@ -264,16 +265,16 @@ class Api(ModuleClass):
                 # self.log.info('tmp_data[0] %s, tmp_data[-1] %s' %(tmp_data[0] ,tmp_data[-1]))
                 #self.tmp_start_date는 DB에 저장되어있는 working_day 의 +1 데이값 즉, 넣어야하는 day의 값을 의미함.(주말이어도 상관 없음)
                 # 늦게 켜서 당일 장이 개시해버린경우(새벽에 넣지말것!)
-                if len(self.data) >= 600 and datetime.datetime.strptime(tmp_data[0][3],
-                                                                          "%Y-%m-%d").date() == datetime.date.today():
+                if(datetime.datetime.strptime(tmp_data[0][3],"%Y-%m-%d").date() == datetime.date.today()):
+                    self.log.info("%s종목 당일 날짜(%s) 데이터 skip " % (subject_code, datetime.datetime.strptime(tmp_data[0][3], "%Y-%m-%d").date()))
                     self.request_tick_info(subject_code, "1", sPreNext)
-                    self.log.info("원래 덯어야될 때 못넣어서 넣는것! %s 종목 DB 저장 완료." % subject_code)
                 # DB에 넣을날(D-1)이 받아온 데이터의 처음이고, 마지막 데이터가 켠 당일(D-day)여서 D-day 값은 안넣어야 할 경우
                 elif len(self.data) >= 600 and datetime.datetime.strptime(tmp_data[0][3],
                                                                           "%Y-%m-%d").date() < datetime.date.today() and datetime.datetime.strptime(
                         tmp_data[-1][3], "%Y-%m-%d").date() == datetime.date.today():
                     while True:
                         tmp_data.reverse()
+                        print(tmp_data)
                         tuple = tmp_data[0]
                         if tuple[3] == datetime.date.today():
                             tmp_data.pop(0)
@@ -281,9 +282,10 @@ class Api(ModuleClass):
                         else:
                             break
                     tmp_data.reverse()
+                    print(tmp_data)
                     self.data = tmp_data + self.data
                     self.db_manager.insert_data(subject_code, self.data)
-                    self.log.info("%s 종목 DB 저장 완료." % subject_code)
+                    self.log.info("D-day날 제거한 %s 종목 DB 저장 완료." % subject_code)
                     self.get_next_subject_data()
                 elif recv_working_day < self.tmp_start_date:
                     while True:
