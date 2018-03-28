@@ -265,11 +265,11 @@ class Api(ModuleClass):
                 # self.log.info('tmp_data[0] %s, tmp_data[-1] %s' %(tmp_data[0] ,tmp_data[-1]))
                 #self.tmp_start_date는 DB에 저장되어있는 working_day 의 +1 데이값 즉, 넣어야하는 day의 값을 의미함.(주말이어도 상관 없음)
                 # 늦게 켜서 당일 장이 개시해버린경우(새벽에 넣지말것!)
-                if(datetime.datetime.strptime(tmp_data[0][3],"%Y-%m-%d").date() == datetime.date.today()):
+                if datetime.datetime.strptime(tmp_data[0][3],"%Y-%m-%d").date() == datetime.date.today():
                     self.log.info("%s종목 당일 날짜(%s) 데이터 skip " % (subject_code, datetime.datetime.strptime(tmp_data[0][3], "%Y-%m-%d").date()))
                     self.request_tick_info(subject_code, "1", sPreNext)
                 # DB에 넣을날(D-1)이 받아온 데이터의 처음이고, 마지막 데이터가 켠 당일(D-day)여서 D-day 값은 안넣어야 할 경우
-                elif len(self.data) >= 600 and datetime.datetime.strptime(tmp_data[0][3],
+                elif datetime.datetime.strptime(tmp_data[0][3],
                                                                           "%Y-%m-%d").date() < datetime.date.today() and datetime.datetime.strptime(
                         tmp_data[-1][3], "%Y-%m-%d").date() == datetime.date.today():
                     while True:
