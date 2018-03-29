@@ -6,8 +6,8 @@ import time
 from PyQt5.QAxContainer import *
 from PyQt5.QtWidgets import *
 
-import auto_login
-import notification
+#import auto_login
+import constant as const
 import screen
 from util import *
 from __module import ModuleClass
@@ -20,7 +20,6 @@ class Api(ModuleClass):
     account = ""
     start_date = ""
     subject_codes = []
-    db_chk_subject_codes =[]
     db_manager = None
 
     def __init__(self, start_date = ""):
@@ -46,7 +45,6 @@ class Api(ModuleClass):
         """
         로그인 윈도우를 실행한다.
         로그인이 성공하거나 실패하는 경우 OnEventConnect 이벤트가 발생하고 이벤트의 인자 값으로 로그인 성공 여부를 알 수 있다.
-
         :return: 0 - 성공, 음수값은 실패
         """
 
@@ -56,8 +54,8 @@ class Api(ModuleClass):
                 self.log.info("연결 성공")
 
                 # auto login
-                lg = auto_login.Login()
-                lg.run()
+                # lg = auto_login.Login()
+                # lg.run()
             else:
                 self.log.info("연결 실패")
 
@@ -66,7 +64,6 @@ class Api(ModuleClass):
     def get_login_info(self, sTag):
         """
         로그인한 사용자 정보를 반환한다.
-
         :param sTag: 사용자 정보 구분 TAG값
             “ACCOUNT_CNT” ? 전체 계좌 개수를 반환한다.
             "ACCNO" ? 전체 계좌를 반환한다. 계좌별 구분은 ‘;’이다.
@@ -118,6 +115,7 @@ class Api(ModuleClass):
 
                 # debug code
                 if len(self.req) > 0:
+                    time.sleep(0.25)
                     self.send_request()
             else:
                 self.err_log.error('send request() : %s' % parse_error_code(rtn))
@@ -125,7 +123,6 @@ class Api(ModuleClass):
     def set_input_value(self, sID, sValue):
         """
         Tran 입력 값을 서버통신 전에 입력한다.
-
         :param sID: 아이템명
         :param sValue: 입력 값
         Ex) openApi.SetInputValue(“종목코드”, “000660”);
@@ -168,7 +165,6 @@ class Api(ModuleClass):
     def OnEventConnect(self, nErrCode):
         """
         통신 연결 상태 변경시 이벤트
-
         :param nErrCode: 에러 코드 - 0이면 로그인 성공, 음수면 실패, 에러코드 참조
         """
         self.log.info("OnEventConnect received")
@@ -182,7 +178,7 @@ class Api(ModuleClass):
             # 다이나믹 종목 정보 요청
             self.get_dynamic_subject_code()
 
-            notification.sendMessage('DB에 넣겠습니다.', self.account)
+            #self.send_request()
 
         elif nErrCode == -101:
             # wait_time = (06:45).to_sec() - time.time()
@@ -200,7 +196,6 @@ class Api(ModuleClass):
         """
         Tran 수신시 이벤트
         서버통신 후 데이터를 받은 시점을 알려준다.
-
         :param py: 화면번호
         :param sRQName: 사용자구분 명
         :param sTrCode: Tran 명
@@ -227,8 +222,6 @@ class Api(ModuleClass):
                     self.subject_codes.append(subject_code)
 
                 if const.TOTAL_PRODUCT_CNT == const.RECEVIED_PRODUCT_CNT:
-                    self.db_chk_subject_codes = self.subject_codes
-                    print('dbchecksubeckcode : %s' %self.db_chk_subject_codes)
                     self.get_next_subject_data()
 
             elif '해외선물옵션틱차트조회' in sRQName:
@@ -255,39 +248,8 @@ class Api(ModuleClass):
                     self.get_next_subject_data()
                     return
 
-                # 디비 마지막 저장한 날짜가 금요일이 아니고 양이적어서 싸이클도는거 pss
-                # print("self.working_day 금요일이면 5 %s" %datetime.datetime.strptime(self.last_working_day,"%Y-%m-%d").date().isoweekday())
-                if (datetime.datetime.strptime(self.last_working_day,"%Y-%m-%d").date().isoweekday()!=5) and len(self.data) >= 600 and ((datetime.datetime.strptime(tmp_data[-1][3],"%Y-%m-%d").date()-datetime.datetime.strptime(tmp_data[0][3],"%Y-%m-%d").date()).days>2):
-                    self.log.info("%s 종목 해당 종목 데이터 미량에 싸이클돌아 pass." % subject_code)
-                    self.get_next_subject_data()
-                    return
-
-                # self.log.info('tmp_data[0] %s, tmp_data[-1] %s' %(tmp_data[0] ,tmp_data[-1]))
-                #self.tmp_start_date는 DB에 저장되어있는 working_day 의 +1 데이값 즉, 넣어야하는 day의 값을 의미함.(주말이어도 상관 없음)
-                # 늦게 켜서 당일 장이 개시해버린경우(새벽에 넣지말것!)
-                if datetime.datetime.strptime(tmp_data[0][3],"%Y-%m-%d").date() == datetime.date.today():
-                    self.log.info("%s종목 당일 날짜(%s) 데이터 skip " % (subject_code, datetime.datetime.strptime(tmp_data[0][3], "%Y-%m-%d").date()))
-                    self.request_tick_info(subject_code, "1", sPreNext)
-                # DB에 넣을날(D-1)이 받아온 데이터의 처음이고, 마지막 데이터가 켠 당일(D-day)여서 D-day 값은 안넣어야 할 경우
-                elif datetime.datetime.strptime(tmp_data[0][3],
-                                                                          "%Y-%m-%d").date() < datetime.date.today() and datetime.datetime.strptime(
-                        tmp_data[-1][3], "%Y-%m-%d").date() == datetime.date.today():
-                    while True:
-                        tmp_data.reverse()
-                        print(tmp_data)
-                        tuple = tmp_data[0]
-                        if tuple[3] == datetime.date.today():
-                            tmp_data.pop(0)
-                            if len(tmp_data) == 0: break
-                        else:
-                            break
-                    tmp_data.reverse()
-                    print(tmp_data)
-                    self.data = tmp_data + self.data
-                    self.db_manager.insert_data(subject_code, self.data)
-                    self.log.info("D-day날 제거한 %s 종목 DB 저장 완료." % subject_code)
-                    self.get_next_subject_data()
-                elif recv_working_day < self.tmp_start_date:
+                #self.log.info(tmp_data[0])
+                if recv_working_day < self.tmp_start_date:
                     while True:
                         tuple = tmp_data[0]
                         if tuple[3] < self.tmp_start_date or datetime.datetime.strptime(tuple[3],
@@ -301,8 +263,8 @@ class Api(ModuleClass):
                     self.db_manager.insert_data(subject_code, self.data)
                     self.log.info("%s 종목 DB 저장 완료." % subject_code)
                     self.get_next_subject_data()
-                # 2주 넘어서 싸이클 돔
                 elif len(self.data) >= 600 and str(tmp_data[-1][3]) < str(self.data[0][3]):
+                    # 싸이클 돔
                     if self.db_manager.is_empty_table(subject_code) or self.last_working_day < recv_working_day:
                         while True:
                             tuple = tmp_data[0]
@@ -316,6 +278,22 @@ class Api(ModuleClass):
                         self.db_manager.insert_data(subject_code, self.data)
                         self.log.info("%s 종목 DB 저장 완료." % subject_code)
                         self.get_next_subject_data()
+                # DB를 넣는데 당일 개장후 넣을때 들어가는 부분
+                elif len(self.data) >= 600 and str(tmp_data[-1][3]) > str(self.data[0][3]):
+                    if self.last_working_day < recv_working_day:
+                        while True:
+                            tmp_data.reverse()
+                            tuple = tmp_data[0]
+                            if tuple[3] > self.tmp_start_date:
+                                tmp_data.pop(0)
+                                if len(tmp_data) == 0: break
+                            else:
+                                break
+                        tmp_data.reverse()
+                        self.data = tmp_data + self.data
+                        self.db_manager.insert_data(subject_code, self.data)
+                        self.log.info("%s 종목 DB 저장 완료." % subject_code)
+                        self.get_next_subject_data()
                 else:
                     while True:
                         tuple = tmp_data[0]
@@ -325,7 +303,7 @@ class Api(ModuleClass):
                         else:
                             break
                     self.data = tmp_data + self.data
-                    # self.log.info("%s 종목 연속조회 요청." % subject_code)
+                    self.log.info("%s 종목 연속조회 요청." % subject_code)
                     self.request_tick_info(subject_code, "1", sPreNext)
 
 
@@ -378,17 +356,5 @@ class Api(ModuleClass):
                     if start_date == "": self.tmp_start_date = get_next_date(self.last_working_day)
                     self.log.info("%s 종목 tmp_start_date : %s" % (subject_code, self.tmp_start_date))
                     self.request_tick_info(subject_code, "1", "")
-            elif len(self.subject_codes) <=0 :
-                notification.sendMessage('DB검증을 시작합니다.',self.account)
-                print(self.db_chk_subject_codes)
-                self.check_DB()
-        except Exception as err:
-            self.log.error(get_error_msg(err))
-
-    def check_DB(self):
-        try:
-            print(self.db_chk_subject_codes)
-            # print(self.db_manager.check_nomal_data(subject_code))
-
         except Exception as err:
             self.log.error(get_error_msg(err))
