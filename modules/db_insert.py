@@ -27,6 +27,25 @@ class DBInsert(ModuleClass):
 
         return str(result[0])
 
+    def get_check_first_input(self, subject_code,working_day):
+        query = """
+        select date from %s where working_day =\'%s\' limit 1
+        """ % (subject_code, working_day)
+
+        result = self.db_manager.exec_query(query, fetch_type=FETCH_ONE)
+        if result == None:
+            return 'err'
+        return str(result[0])
+
+    def get_subject_code(self):
+        result_list=[]
+        query = """
+        show tables like \"%18%\"
+        """
+
+        return self.db_manager.exec_query(query, fetch_type=FETCH_ALL)
+
+
     def insert_data(self, subject_code, data):
         try:
             query = """

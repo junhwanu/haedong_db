@@ -11,10 +11,5 @@ day2.strip('-')
 #월요일이 1
 tran_day = datetime.datetime.strptime(day2,"%Y-%m-%d").date().isoweekday()
 print(datetime.datetime.strptime(day2,"%Y-%m-%d").date()==datetime.date.today())
-print(t[n])
+print(datetime.date.today())
 print(tran_day)
-
-if (n !=4):
-    print(datetime.date.today()-datetime.timedelta(days =1))
-    print(eq(tran_day,datetime.date.today()))
-

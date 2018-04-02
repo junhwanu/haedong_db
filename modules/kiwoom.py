@@ -6,12 +6,14 @@ import time
 from PyQt5.QAxContainer import *
 from PyQt5.QtWidgets import *
 
-#import auto_login
+# import auto_login
 import constant as const
+import notification
 import screen
 from util import *
 from __module import ModuleClass
 import db_insert
+
 
 class Api(ModuleClass):
     req = []
@@ -22,7 +24,7 @@ class Api(ModuleClass):
     subject_codes = []
     db_manager = None
 
-    def __init__(self, start_date = ""):
+    def __init__(self, start_date=""):
         super(Api, self).__init__()
 
         self.app = QApplication(sys.argv)
@@ -36,10 +38,10 @@ class Api(ModuleClass):
         if self.connect == 0:
             self.app.exec_()
 
-
     '''
     Interface Methods
     '''
+
     @property
     def connect(self):
         """
@@ -162,6 +164,7 @@ class Api(ModuleClass):
     '''
     Control Event Handlers
     '''
+
     def OnEventConnect(self, nErrCode):
         """
         통신 연결 상태 변경시 이벤트
@@ -178,7 +181,7 @@ class Api(ModuleClass):
             # 다이나믹 종목 정보 요청
             self.get_dynamic_subject_code()
 
-            #self.send_request()
+            # self.send_request()
 
         elif nErrCode == -101:
             # wait_time = (06:45).to_sec() - time.time()
@@ -207,7 +210,8 @@ class Api(ModuleClass):
         :param sSplmMsg: 1.0.0.1 버전 이후 사용하지 않음.
         """
         self.log.debug("current thread : %s" % threading.current_thread().__class__.__name__)
-        self.log.debug("onReceiveTrData, sScrNo : %s, sRQName : %s, sTrCode : %s, sRecordName : %s, sPreNext : %s" % (sScrNo, sRQName, sTrCode, sRecordName, sPreNext))
+        self.log.debug("onReceiveTrData, sScrNo : %s, sRQName : %s, sTrCode : %s, sRecordName : %s, sPreNext : %s" % (
+            sScrNo, sRQName, sTrCode, sRecordName, sPreNext))
 
         try:
             if sRQName == '상품별현재가조회':
@@ -237,7 +241,7 @@ class Api(ModuleClass):
 
                 tmp_data = parse_data(data_str.split())
 
-                if(len(tmp_data)<10):
+                if (len(tmp_data) < 10):
                     self.log.info("%s 종목 해당 종목 데이터 미량으로 Pass." % subject_code)
                     self.get_next_subject_data()
                     return
@@ -248,7 +252,7 @@ class Api(ModuleClass):
                     self.get_next_subject_data()
                     return
 
-                #self.log.info(tmp_data[0])
+                # self.log.info(tmp_data[0])
                 if recv_working_day < self.tmp_start_date:
                     while True:
                         tuple = tmp_data[0]
@@ -303,9 +307,8 @@ class Api(ModuleClass):
                         else:
                             break
                     self.data = tmp_data + self.data
-                    self.log.info("%s 종목 연속조회 요청." % subject_code)
+                    #self.log.info("%s 종목 연속조회 요청." % subject_code)
                     self.request_tick_info(subject_code, "1", sPreNext)
-
 
                 '''
                 recv_working_day = tmp_data.get_working_day()
@@ -356,5 +359,10 @@ class Api(ModuleClass):
                     if start_date == "": self.tmp_start_date = get_next_date(self.last_working_day)
                     self.log.info("%s 종목 tmp_start_date : %s" % (subject_code, self.tmp_start_date))
                     self.request_tick_info(subject_code, "1", "")
+            elif len(self.subject_codes) <= 0:
+                notification.sendMessage('DB검증을 시작합니다.', self.account)
+                db_subect_code = self.db_manager.get_subject_code()
+                for db_sub_code in db_subect_code:
+                    print(self.db_manager.get_check_first_input(db_sub_code[0], self.last_working_day))
         except Exception as err:
             self.log.error(get_error_msg(err))

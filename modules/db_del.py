@@ -1,4 +1,5 @@
 import pymysql
+import datetime
 import time
 
 cour=None
@@ -13,17 +14,17 @@ with conn.cursor() as cour :
 # print(result)
 # print(result2)
 for i in result2 :
-    query = "select * from %s where working_day =\'2018-03-29\'" % i[0]
+    query = "select date from %s where working_day =\'2018-04-02\'" % i[0]
     print(query)
     with conn.cursor() as cour:
         count = cour.execute(query)
         print(count)
-    if count>0:
-        query1 = "delete from %s where working_day = '2018-03-29'" % i[0]
-        with conn.cursor() as cour:
-            cour.execute(query1)
-            print(query1)
-            conn.commit()
-    else :
-        pass
+    # if count>0:
+    #     query1 = "delete from %s where working_day = '2018-04-02'" % i[0]
+    #     with conn.cursor() as cour:
+    #         cour.execute(query1)
+    #         print(query1)
+    #         conn.commit()
+    # else :
+    #     pass
 
