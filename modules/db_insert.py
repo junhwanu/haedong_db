@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import datetime
+
 from __module import ModuleClass
 from constant import *
 import db_manager
@@ -27,7 +29,7 @@ class DBInsert(ModuleClass):
 
         return str(result[0])
 
-    def get_check_first_input(self, subject_code,working_day):
+    def check_first_input(self, subject_code,working_day):
         query = """
         select date from %s where working_day =\'%s\' limit 1
         """ % (subject_code, working_day)
@@ -35,14 +37,32 @@ class DBInsert(ModuleClass):
         result = self.db_manager.exec_query(query, fetch_type=FETCH_ONE)
         if result == None:
             return 'err'
-        return str(result[0])
+        return result
+
+    def check_last_input(self, subject_code, working_day):
+        query = """
+           select date from %s where working_day =\'%s\' order by id desc limit 1
+           """ % (subject_code, working_day)
+
+        result = self.db_manager.exec_query(query, fetch_type=FETCH_ONE)
+        if result == None:
+            return 'err'
+        return result
+
+    #18로 되어있는 월물중에 working_day가 유효한지 판단
+    def check_subject_code(self, subject_code,working_day):
+        query = """
+        select date from %s where working_day =\'%s\'
+        """ % (subject_code, working_day)
+
+        result = self.db_manager.exec_query(query, fetch_type=FETCH_ONE)
+        return result
 
     def get_subject_code(self):
         result_list=[]
         query = """
-        show tables like \"%18%\"
-        """
-
+        show tables like \"%%%s%%\"
+        """%  str(datetime.date.today().year).replace('20','')
         return self.db_manager.exec_query(query, fetch_type=FETCH_ALL)
 
 

@@ -360,9 +360,37 @@ class Api(ModuleClass):
                     self.log.info("%s 종목 tmp_start_date : %s" % (subject_code, self.tmp_start_date))
                     self.request_tick_info(subject_code, "1", "")
             elif len(self.subject_codes) <= 0:
-                notification.sendMessage('DB검증을 시작합니다.', self.account)
+                notification.sendMessage('DB검증을 시작합니다.',None)
                 db_subect_code = self.db_manager.get_subject_code()
+                #db에 있는 모든 2018년도 월물 찾아서 그중 금,유로,크루드,mini-S&P,엔화를 찾아서 DB검증실시
                 for db_sub_code in db_subect_code:
-                    print(self.db_manager.get_check_first_input(db_sub_code[0], self.last_working_day))
+                    self.last_working_day = self.db_manager.get_last_working_day(db_sub_code[0])
+                    if(self.db_manager.check_subject_code(db_sub_code[0], self.last_working_day)==None):
+                        pass
+                    else:
+                        if(db_sub_code[0].find('GC')==0 or db_sub_code[0].find('6E')==0 or db_sub_code[0].find('CL')==0 or db_sub_code[0].find('ES')==0 or db_sub_code[0].find('6J')==0) :
+                            d = self.db_manager.check_first_input(db_sub_code[0], self.last_working_day)
+                            l = self.db_manager.check_last_input(db_sub_code[0], self.last_working_day)
+                            if(d=='err'or l=='err'):
+                                notification.sendMessage('틀렸다...%s'%db_sub_code[0],None)
+                            elif((l[0]-d[0])> datetime.timedelta(hours=22)):
+                                self.log.info("%s종목 정상데이터 시작 %s - 끝 %s"%(db_sub_code[0],d[0].isoformat(),l[0].isoformat()))
+                            else:
+                                self.log.info("%s 종목의 입력갑의 spread가 틀렸다...%s" % (db_sub_code[0],(l[0]-d[0])))
+                                notification.sendMessage('%s 종목의 입력갑의 spread가 틀렸다...%s' % (db_sub_code[0],(l[0]-d[0])),None)
+                        #항생은 시작시간과 마감시간이 다름
+                        elif(db_sub_code[0].find('HSI')==0):
+                            d = self.db_manager.check_first_input(db_sub_code[0], self.last_working_day)
+                            l = self.db_manager.check_last_input(db_sub_code[0], self.last_working_day)
+                            if (d == 'err' or l == 'err'):
+                                notification.sendMessage('틀렸다...%s' % db_sub_code[0],None)
+                            elif ((l[0] - d[0]) > datetime.timedelta(hours=23)):
+                                self.log.info(
+                                    "%s종목 정상데이터 시작 %s - 끝 %s" % (db_sub_code[0], d[0].isoformat(), l[0].isoformat()))
+                            else:
+                                self.log.info("%s 종목의 입력갑의 spread가 틀렸다...%s" % (db_sub_code[0], (l[0] - d[0])))
+                                notification.sendMessage(
+                                    '%s 종목의 입력갑의 spread가 틀렸다...%s' % (db_sub_code[0], (l[0] - d[0])),None)
+                notification.sendMessage('DB정상입력확인완료',None)
         except Exception as err:
             self.log.error(get_error_msg(err))
