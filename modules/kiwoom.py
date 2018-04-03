@@ -373,7 +373,7 @@ class Api(ModuleClass):
                             l = self.db_manager.check_last_input(db_sub_code[0], self.last_working_day)
                             if(d=='err'or l=='err'):
                                 notification.sendMessage('틀렸다...%s'%db_sub_code[0],None)
-                            elif((l[0]-d[0])> datetime.timedelta(hours=22)):
+                            elif((l[0]-d[0])>datetime.timedelta(hours=22,minutes=59,seconds=30)):
                                 self.log.info("%s종목 정상데이터 시작 %s - 끝 %s"%(db_sub_code[0],d[0].isoformat(),l[0].isoformat()))
                             else:
                                 self.log.info("%s 종목의 입력갑의 spread가 틀렸다...%s" % (db_sub_code[0],(l[0]-d[0])))
@@ -384,7 +384,7 @@ class Api(ModuleClass):
                             l = self.db_manager.check_last_input(db_sub_code[0], self.last_working_day)
                             if (d == 'err' or l == 'err'):
                                 notification.sendMessage('틀렸다...%s' % db_sub_code[0],None)
-                            elif ((l[0] - d[0]) > datetime.timedelta(hours=23)):
+                            elif ((l[0] - d[0]) > datetime.timedelta(hours=23,minutes=14)):
                                 self.log.info(
                                     "%s종목 정상데이터 시작 %s - 끝 %s" % (db_sub_code[0], d[0].isoformat(), l[0].isoformat()))
                             else:

@@ -19,4 +19,4 @@ with conn.cursor() as cour:
     count2 = cour.fetchone()
 print(count2)
 
-print((count2[0]-count12[0])> datetime.timedelta(hours=23))
+print((count2[0]-count12[0]))
