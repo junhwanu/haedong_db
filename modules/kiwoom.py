@@ -360,7 +360,7 @@ class Api(ModuleClass):
                     self.log.info("%s 종목 tmp_start_date : %s" % (subject_code, self.tmp_start_date))
                     self.request_tick_info(subject_code, "1", "")
             elif len(self.subject_codes) <= 0:
-                notification.sendMessage('DB검증을 시작합니다.',None)
+                notification.sendMessage('DB검증을 시작합니다.',self.account)
                 db_subect_code = self.db_manager.get_subject_code()
                 #db에 있는 모든 2018년도 월물 찾아서 그중 금,유로,크루드,mini-S&P,엔화를 찾아서 DB검증실시
                 for db_sub_code in db_subect_code:
@@ -372,25 +372,25 @@ class Api(ModuleClass):
                             d = self.db_manager.check_first_input(db_sub_code[0], self.last_working_day)
                             l = self.db_manager.check_last_input(db_sub_code[0], self.last_working_day)
                             if(d=='err'or l=='err'):
-                                notification.sendMessage('틀렸다...%s'%db_sub_code[0],None)
+                                notification.sendMessage('틀렸다...%s'%db_sub_code[0],self.account)
                             elif((l[0]-d[0])>datetime.timedelta(hours=22,minutes=59,seconds=30)):
                                 self.log.info("%s종목 정상데이터 시작 %s - 끝 %s"%(db_sub_code[0],d[0].isoformat(),l[0].isoformat()))
                             else:
                                 self.log.info("%s 종목의 입력갑의 spread가 틀렸다...%s" % (db_sub_code[0],(l[0]-d[0])))
-                                notification.sendMessage('%s 종목의 입력갑의 spread가 틀렸다...%s' % (db_sub_code[0],(l[0]-d[0])),None)
+                                notification.sendMessage('%s 종목의 입력갑의 spread가 틀렸다...%s' % (db_sub_code[0],(l[0]-d[0])),self.account)
                         #항생은 시작시간과 마감시간이 다름
                         elif(db_sub_code[0].find('HSI')==0):
                             d = self.db_manager.check_first_input(db_sub_code[0], self.last_working_day)
                             l = self.db_manager.check_last_input(db_sub_code[0], self.last_working_day)
                             if (d == 'err' or l == 'err'):
-                                notification.sendMessage('틀렸다...%s' % db_sub_code[0],None)
+                                notification.sendMessage('틀렸다...%s' % db_sub_code[0],self.account)
                             elif ((l[0] - d[0]) > datetime.timedelta(hours=23,minutes=14)):
                                 self.log.info(
                                     "%s종목 정상데이터 시작 %s - 끝 %s" % (db_sub_code[0], d[0].isoformat(), l[0].isoformat()))
                             else:
                                 self.log.info("%s 종목의 입력갑의 spread가 틀렸다...%s" % (db_sub_code[0], (l[0] - d[0])))
                                 notification.sendMessage(
-                                    '%s 종목의 입력갑의 spread가 틀렸다...%s' % (db_sub_code[0], (l[0] - d[0])),None)
-                notification.sendMessage('DB정상입력확인완료',None)
+                                    '%s 종목의 입력갑의 spread가 틀렸다...%s' % (db_sub_code[0], (l[0] - d[0])),self.account)
+                notification.sendMessage('DB정상입력확인완료',self.account)
         except Exception as err:
             self.log.error(get_error_msg(err))
