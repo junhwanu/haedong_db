@@ -50,7 +50,7 @@ class DBInsert(ModuleClass):
         return result
 
     #18로 되어있는 월물중에 working_day가 유효한지 판단
-    def check_subject_code(self, subject_code,working_day):
+    def check_subject_code(self, subject_code, working_day):
         query = """
         select date from %s where working_day =\'%s\'
         """ % (subject_code, working_day)
@@ -152,3 +152,8 @@ class DBInsert(ModuleClass):
     def check_nomal_data(self,table_name):
         query = 'select * from  %s order by id desc limit 1' % table_name
         return self.db_manager.exec_query(query, fetch_type=FETCH_ONE)
+
+    # 당일데이터 삭제
+    def del_err_data(self,table_name, working_day):
+        query = "select date from %s where working_day =\'%s\'" % table_name, table_name
+        return self.db_manager.exec_query(query)

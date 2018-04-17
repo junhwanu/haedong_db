@@ -14,13 +14,13 @@ with conn.cursor() as cour :
 # print(result)
 # print(result2)
 for i in result2 :
-    query = "select date from %s where working_day =\'2018-04-04\'" % i[0]
+    query = "select date from %s where working_day =\'2018-04-17\'" % i[0]
     print(query)
     with conn.cursor() as cour:
         count = cour.execute(query)
         print(count)
     # if count>0:
-    #     query1 = "delete from %s where working_day = '2018-04-03'" % i[0]
+    #     query1 = "delete from %s where working_day = '2018-04-17'" % i[0]
     #     with conn.cursor() as cour:
     #         cour.execute(query1)
     #         print(query1)
