@@ -366,10 +366,12 @@ class Api(ModuleClass):
                 for db_sub_code in db_subect_code:
                     self.last_working_day = self.db_manager.get_last_working_day(db_sub_code[0])
                     # print(datetime.datetime.strptime(self.last_working_day,"%Y-%m-%d").date())
+                    # print(datetime.date.today())
+                    # print(datetime.datetime.strptime(self.last_working_day,"%Y-%m-%d").date()==datetime.date.today())
                     # 당일데이터 삭제
-                    if(datetime.datetime.strptime(self.last_working_day,"%Y-%m-%d").date()==datetime.date.today()==True):
+                    if(datetime.datetime.strptime(self.last_working_day,"%Y-%m-%d").date()==datetime.date.today()):
                         self.log.info("%s 종목의 데이터 중 당일 데이터 삭제"%db_sub_code[0])
-                        print(self.db_manager.del_err_data(db_sub_code[0], datetime.date.today()))
+                        self.log.info(self.db_manager.del_err_data(db_sub_code[0], datetime.date.today()))
                     if(self.db_manager.check_subject_code(db_sub_code[0], self.last_working_day)==None):
                         pass
                     else:
