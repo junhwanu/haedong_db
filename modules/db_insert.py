@@ -155,5 +155,8 @@ class DBInsert(ModuleClass):
 
     # 당일데이터 삭제
     def del_err_data(self,table_name, working_day):
-        query = "select date from %s where working_day =\'%s\'" % table_name, table_name
-        return self.db_manager.exec_query(query)
+        #query = "select date from %s where working_day =\'%s\'" % table_name, working_day
+        query = "delete from %s where working_day >= '%s'" % table_name, working_day
+        print(query)
+        result = self.db_manager.exec_query(query, fetch_type=FETCH_ONE)
+        return str(result[0])
