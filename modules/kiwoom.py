@@ -371,7 +371,8 @@ class Api(ModuleClass):
                     # 당일데이터 삭제
                     if(datetime.datetime.strptime(self.last_working_day,"%Y-%m-%d").date()==datetime.date.today()):
                         self.log.info("%s 종목의 데이터 중 당일 데이터 삭제"%db_sub_code[0])
-                        self.log.info("왜안찍히지 -3-;;;" %str(datetime.date.today()))
+                        print("왜안찍히지 -3-;;;" %str(datetime.date.today()))
+                        print("왜안찍히지 " % datetime.date.today())
                         self.db_manager.del_err_data(db_sub_code[0], str(datetime.date.today()))
                     if(self.db_manager.check_subject_code(db_sub_code[0], self.last_working_day)==None):
                         pass
