@@ -12,15 +12,15 @@ with conn.cursor() as cour :
     result = cour.execute('show tables like "%18%"')
     result2 = cour.fetchall()
 # print(result)
-# print(result2)
+
 for i in result2 :
-    query = "select date from %s where working_day >=\'2018-05-31\'" % i[0]
+    query = "select date from %s where working_day >=\'%s\'" % (i[0], str(datetime.date.today()))
     print(query)
     with conn.cursor() as cour:
         count = cour.execute(query)
         print(count)
     if count>0:
-        query1 = "delete from %s where working_day >= '2018-05-31'" % i[0]
+        query1 = "delete from %s where working_day >= '%s'" % (i[0], str(datetime.date.today()))
         with conn.cursor() as cour:
             cour.execute(query1)
             print(query1)

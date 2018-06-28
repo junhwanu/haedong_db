@@ -15,5 +15,5 @@ print(day)
 #월요일이 1
 #tran_day = datetime.datetime.strptime(day,"%Y-%m-%d").date().isoweekday()
 print(datetime.datetime.strptime(day2,"%Y-%m-%d").date()==datetime.date.today())
-print(datetime.date.today())
+print(str(datetime.date.today()))
 #print(tran_day)
