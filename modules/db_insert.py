@@ -159,3 +159,8 @@ class DBInsert(ModuleClass):
         query = "delete from %s where working_day >= '%s'" % (table_name, str(datetime.date.today()))
         print(query)
         result = self.db_manager.exec_query(query, fetch_type=FETCH_ONE)
+
+    def chk_count_row(self, table_name, date):
+        query = " select count(*) from '%s' where working_day = '%s'" % date
+        print(query)
+        result = self.db_manager.exec_query(query, fetch_type=FETCH_ONE)
