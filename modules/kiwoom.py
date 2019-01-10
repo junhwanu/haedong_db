@@ -369,17 +369,28 @@ class Api(ModuleClass):
                     # print(datetime.date.today())
                     # print(datetime.datetime.strptime(self.last_working_day,"%Y-%m-%d").date()==datetime.date.today())
                     # 당일데이터가 전 데이터의 반일때 에러내기
-                    day = datetime.datetime.strptime(self.last_working_day,"%Y-%m-%d").date()
-                    print('nnnnnnn' + day)
-                    if(day.weekday()==0):
-                        yesterday_count = self.db_manager.chk_count_row(db_sub_code[0], datetime.datetime.strptime(self.last_working_day,"%Y-%m-%d").date() - datetime.timedelta(3))
-                        today_count = self.db_manager.chk_count_row(db_sub_code[0],
-                                                                    datetime.datetime.strptime(self.last_working_day,
-                                                                                               "%Y-%m-%d").date())
+                    today = datetime.datetime.strptime(self.last_working_day,"%Y-%m-%d").date()
+                    if(today.weekday()==0):
+                        yesterday = today - datetime.timedelta(days=4)
+                        day = today - datetime.timedelta(days=3)
+                        yesterday_count = self.db_manager.chk_count_row(db_sub_code[0], yesterday.strftime('%Y-%m-%d'))
+                        today_count = self.db_manager.chk_count_row(db_sub_code[0], day.strftime('%Y-%m-%d'))
+                    elif(today.weekday()==1):
+                        yesterday = today - datetime.timedelta(days=4)
+                        day = today - datetime.timedelta(days=1)
+                        yesterday_count = self.db_manager.chk_count_row(db_sub_code[0],  yesterday.strftime('%Y-%m-%d'))
+                        today_count = self.db_manager.chk_count_row(db_sub_code[0], day.strftime('%Y-%m-%d'))
                     else:
-                        yesterday_count = self.db_manager.chk_count_row(db_sub_code[0], datetime.datetime.strptime(self.last_working_day,"%Y-%m-%d").date() - datetime.timedelta(1))
-                        today_count = self.db_manager.chk_count_row(db_sub_code[0], datetime.datetime.strptime(self.last_working_day,"%Y-%m-%d").date())
-                    if(today_count<=yesterday_count/2):
+                        yesterday = today - datetime.timedelta(days =2)
+                        day = today - datetime.timedelta(days =1)
+                        yesterday_count = self.db_manager.chk_count_row(db_sub_code[0], yesterday.strftime('%Y-%m-%d'))
+                        today_count = self.db_manager.chk_count_row(db_sub_code[0], day.strftime('%Y-%m-%d'))
+
+                    print(yesterday)
+                    print(today)
+                    print(today_count[0])
+                    print(yesterday_count[0])
+                    if(today_count[0]<=yesterday_count[0]/2):
                         print('ERR 어제의 반도안되는 데이터가 오늘들어옴!')
                     # 당일데이터 삭제
                     if(datetime.datetime.strptime(self.last_working_day,"%Y-%m-%d").date()==datetime.date.today()):

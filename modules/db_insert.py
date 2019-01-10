@@ -161,6 +161,6 @@ class DBInsert(ModuleClass):
         result = self.db_manager.exec_query(query, fetch_type=FETCH_ONE)
 
     def chk_count_row(self, table_name, date):
-        query = " select count(*) from '%s' where working_day = '%s'" % date
+        query = " select count(*) from %s where working_day = '%s'" % (table_name, date)
         print(query)
-        result = self.db_manager.exec_query(query, fetch_type=FETCH_ONE)
+        return self.db_manager.exec_query(query, fetch_type=FETCH_ONE)
